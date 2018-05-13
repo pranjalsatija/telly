@@ -1,6 +1,9 @@
 # tsc Output
 dist
 
+# .DS_Store
+.DS_Store
+
 # Logs
 logs
 *.log
