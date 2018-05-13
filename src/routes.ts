@@ -1,5 +1,7 @@
 
 import * as express from "express";
+import * as firebase from "firebase-admin";
+import * as twilio from "./twilio";
 
 export default buildRouter();
 
@@ -10,8 +12,16 @@ function buildRouter(): express.Router {
     return router;
 }
 
-function startAuthentication(req: express.Request, res: express.Response) {
-    return;
+async function startAuthentication(req: express.Request, res: express.Response): Promise<void> {
+    async function createVerificationCode() {
+        // do something
+    }
+
+    async function sendSMS(verificationCode: string) {
+        // do something
+    }
+
+    res.json("code_sent");
 }
 
 function finishAuthentication(req: express.Request, res: express.Response) {

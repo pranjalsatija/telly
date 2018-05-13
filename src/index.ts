@@ -3,8 +3,10 @@ import * as express from "express";
 import * as firebase from "firebase-admin";
 import * as http from "http";
 import * as routes from "./routes";
+import * as twilio from "./twilio";
 
 require("dotenv").load();
+twilio.authenticate();
 
 const serviceAccount = require(process.env.FIREBASE_SERVICE_ACCOUNT);
 firebase.initializeApp({
