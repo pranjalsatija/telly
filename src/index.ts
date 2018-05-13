@@ -1,9 +1,16 @@
 import * as bodyParser from "body-parser";
 import * as express from "express";
+import * as firebase from "firebase-admin";
 import * as http from "http";
 import * as routes from "./routes";
 
 require("dotenv").load();
+
+const serviceAccount = require(process.env.FIREBASE_SERVICE_ACCOUNT);
+firebase.initializeApp({
+    credential: firebase.credential.cert(serviceAccount),
+    databaseURL: process.env.FIREBASE_DB_URL,
+});
 
 const app = express.default();
 app.use(bodyParser.json());
