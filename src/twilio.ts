@@ -25,11 +25,9 @@ export async function standardizePhoneNumber(phoneNumber: string): Promise<any> 
 }
 
 export async function sendSMS(phoneNumber: string, message: string) {
-    const response = await smsClient.messages.create({
+    await smsClient.messages.create({
         body: message,
         from: process.env.TWILIO_PHONE_NUMBER,
         to: phoneNumber,
     });
-
-    console.log(response);
 }
