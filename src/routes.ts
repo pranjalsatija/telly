@@ -19,7 +19,7 @@ async function startAuthentication(req: express.Request, res: express.Response) 
     try {
         phoneNumber = await twilio.standardizePhoneNumber(req.body.phone_number);
     } catch (error) {
-        res.status(error.status || 500).send(error);
+        res.status(error.code || 500).json(error);
         return;
     }
 
@@ -47,8 +47,12 @@ async function startAuthentication(req: express.Request, res: express.Response) 
         twilio.sendSMS(phoneNumber, `Your verification code for ${process.env.SERVICE_NAME} is ${verificationCode}.`);
     }
 
-    const code = await createVerificationCode();
-    await sendSMS(code);
+    try {
+        const code = await createVerificationCode();
+        await sendSMS(code);
+    } catch (error) {
+        res.status(error.code || 500).send(error);
+    }
 
     res.json({
         message: `Code sent to ${phoneNumber}.`,
