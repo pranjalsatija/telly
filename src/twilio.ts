@@ -13,7 +13,10 @@ export async function standardizePhoneNumber(phoneNumber: string): Promise<any> 
     return new Promise((fulfill, reject) => {
         lookupsClient.phoneNumbers(phoneNumber).get((error, response) => {
             if (error != null && error.status === 404) {
-                reject(`Invalid phone number: ${phoneNumber}.`);
+                reject({
+                    code: 404,
+                    message: `Invalid phone number: ${phoneNumber}.`,
+                });
             } else if (response.phone_number != null) {
                 const standardizedNumber = response.phone_number;
                 fulfill(standardizedNumber);
