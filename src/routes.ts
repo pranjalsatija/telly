@@ -1,8 +1,6 @@
 
 import * as express from "express";
-import * as firebase from "firebase-admin";
-import * as randomstring from "randomstring";
-import * as twilio from "./twilio";
+import * as util from "./util";
 
 export default buildRouter();
 
@@ -14,51 +12,39 @@ function buildRouter(): express.Router {
 }
 
 async function startAuthentication(req: express.Request, res: express.Response) {
-    let phoneNumber: string;
-
     try {
-        phoneNumber = await twilio.standardizePhoneNumber(req.body.phone_number);
+        const phoneNumber = await util.standardizePhoneNumber(req.body.phone_number);
+        const code = await util.createVerificationCode(phoneNumber);
+        const message = `Your verification code for ${process.env.SERVICE_NAME} is ${code}.`;
+
+        await util.sendSMS(phoneNumber, message);
+
+        res.json({
+            message: `Code sent to ${phoneNumber}.`,
+        });
     } catch (error) {
         res.status(error.code || 500).json(error);
         return;
     }
-
-    async function createVerificationCode(): Promise<any> {
-        const verificationCode: string = randomstring.generate({
-            charset: "numeric",
-            length: 6,
-        });
-
-        return new Promise((fulfill, reject) => {
-            firebase.database().ref(`/verificationCodes`).push({
-                phone_number: phoneNumber,
-                verification_code: verificationCode,
-            }, (error) => {
-                if (error != null) {
-                    reject(error);
-                } else {
-                    fulfill(verificationCode);
-                }
-            });
-        });
-    }
-
-    async function sendSMS(verificationCode: string) {
-        twilio.sendSMS(phoneNumber, `Your verification code for ${process.env.SERVICE_NAME} is ${verificationCode}.`);
-    }
-
-    try {
-        const code = await createVerificationCode();
-        await sendSMS(code);
-    } catch (error) {
-        res.status(error.code || 500).send(error);
-    }
-
-    res.json({
-        message: `Code sent to ${phoneNumber}.`,
-    });
 }
 
 async function finishAuthentication(req: express.Request, res: express.Response) {
-    return;
+    try {
+        const userPhoneNumber = await util.standardizePhoneNumber(req.body.phone_number);
+        const userVerificationCode = req.body.verification_code;
+        const verificationCode = await util.getVerificationCode(userPhoneNumber);
+
+        if (verificationCode === userVerificationCode) {
+            res.json(await util.generateToken(userPhoneNumber));
+            util.deleteAllVerificationCodes(userPhoneNumber);
+        } else {
+            throw {
+                code: 401,
+                message: "The provided verification code was invalid.",
+            };
+        }
+    } catch (error) {
+        res.status(error.code || 500).send(error);
+        return;
+    }
 }
