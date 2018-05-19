@@ -2,9 +2,9 @@
 An unopinionated Typescript service that makes it easy to add phone number authentication to your app.
 
 ## What is telly?
-Telly is a simple, host-it-yourself API that lets you add phone number authentication to your app. It exposes 2 API routes that let you start authentication (request a code), and finish it (verify the code). It's designed to be simple, modular, and flexible so that it integrates easily with the rest of your backend.
+telly is a simple, host-it-yourself API that lets you add phone number authentication to your app. It exposes 2 API routes that let you start authentication (request a code), and finish it (verify the code). It's designed to be simple, modular, and flexible so that it integrates easily with the rest of your backend.
 
-Telly uses Twilio to send SMS messages to the user's phone, and Firebase's Realtime DB to store verification codes while the user completes verification. If a user is successfully verified, telly generates an auth token that you can then use with your service. All 3 of these components are pluggable, meaning you can easily replace Twilio with your own SMS provider, use a different solution for storing codes between the start and end of the authentication cycle, and (most importantly), provide custom logic for token generation upon successful authentication. You don't need to know anything about Twilio or Firebase to use Telly; you just need to provide an account SID and auth token for Twilio, and a database URL and service account file for Firebase (see the docs for more).
+telly uses Twilio to send SMS messages to the user's phone, and Firebase's Realtime DB to store verification codes while the user completes verification. If a user is successfully verified, telly generates an auth token that you can then use with your service. All 3 of these components are pluggable, meaning you can easily replace Twilio with your own SMS provider, use a different solution for storing codes between the start and end of the authentication cycle, and (most importantly), provide custom logic for token generation upon successful authentication. You don't need to know anything about Twilio or Firebase to use telly; you just need to provide an account SID and auth token for Twilio, and a database URL and service account file for Firebase (see the docs for more).
 
 ## How can I use telly?
 ### Cloning
@@ -36,12 +36,18 @@ Usage is pretty simple. For brevity, we'll assume that you've hosted your telly 
 * To resend a code, just send another `POST` to the `start` endpoint. When you call `finish`, telly only checks the most recently sent code, so all old codes are automatically invalidated. In the near future, telly will support token expiration so that old tokens will become invalid after a period of time.
 
 ### Customization
-For now, customizing telly as mentioned above isn't that easy. I'll be updating it soon so that you can really easily replace the logic for phone number related tasks, database storage and retrieval, and token generation. When I do, this section will be updated.
+telly comes with a `util.ts` file that contains code for core logic like standardizing phone numbers, sending SMS messages, generating tokens, etc. You can easily customize how telly works by modifying or replacing the declarations in util.ts. Most of the functionality is pretty self explanatory, but here's some rudimentary documentation:
+* `standardizePhoneNumber()`: Responsible for taking a phone number in any arbitrary format and standardizing it. This is required so that variations in how a phone number is formatted don't lead to lookup errors. For example, 1234567890, 123-456-7890, (123)-456-7890, and 123.456.7890 are all the same phone number, but each is formatted differently. `standardizePhoneNumber()` is responsible for converting all of those representations into one consistent representation that can be used for database queries. By default, `standardizePhoneNumber()` uses the free [Twilio Format Lookup API](https://www.twilio.com/lookup) to convert numbers to the E164 format, but your implementation is free to use any format. Just remember that inconsistent standardization will lead to errors when users authenticate. If a number is invalid, you should throw an error from this function.
+* `sendSMS()`: Responsible for taking a phone number and a message, and sending the provided message to the phone number. By default, `sendSMS()` uses Twilio's SMS API to send messages.
+* `createVerificationCode()`: Responsible for creating a verification code that a user can use to verify their phone number. This function should also save the verification code somewhere so that `getVerificationCode()` can retrieve it later. By default, this function uses the `randomstring` NPM package to generate a 6 digit numerical code, and it saves it in Firebase under the `/verificationCodes` tree.
+* `deleteAllVerificationCodes()`: Responsible for deleting all the verification codes that have been issued to a specified phone number.
+* `generateToken()`: Responsible for generating an auth token that users can use with your service. By default, this function uses the Firebase Admin API to generate a JWT that can be used for Firebase Custom Auth.
+* `getVerificationCode()`: Responsible for getting the verification code issued to a specific phone number. In some cases, multiple codes may have been issues to a specific number. For security and practicality reasons, this function should return the last one that was issued.
 
 ## What's next?
-- [ ] Make it easier to "plug" the phone number validation, SMS sending, and verification code storage functionality.
+- [X] Make it easier to "plug" the phone number validation, SMS sending, and verification code storage functionality.
 - [ ] Add SSL to telly so that all connections are forcibly established over HTTPS.
 - [ ] Add rate limiting so that developers can control how often the same user can request a code.
-- [ ] Add customizable code generation.
+- [X] Add customizable code generation.
 - [ ] Add token expiration so that tokens automatically become invalid after a certain time.
 - [ ] Add support for custom SMS bodies.
