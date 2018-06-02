@@ -1,5 +1,5 @@
 {
-  "name": "cluster-server",
+  "name": "telly",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
@@ -10,7 +10,7 @@
   "author": "Pranjal Satija",
   "license": "ISC",
   "repository": {
-    "url": "https://github.com/pranjalsatija/cluster"
+    "url": "https://github.com/pranjalsatija/telly"
   },
   "dependencies": {
     "@types/body-parser": "^1.17.0",
